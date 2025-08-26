@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+    <title>HTML Course Progress Tracker</title>
+    <style>
+        :root {
+            /* Light Theme (default) */
+            --text-primary: #3d233d; /* Very Dark Plum */
+            --text-secondary: #5c3a5c; /* Deeper Mauve */
+            --accent: #e77286; /* Rosy Pink */
+            --completed: #20b2aa; /* Light Sea Green */
+            --bg-card: rgba(255, 255, 255, 0.45);
+            --bg-card-open: rgba(255, 255, 255, 0.65);
+            --border-card: rgba(255, 255, 255, 0.8);
+            --timeline-line: rgba(255, 255, 255, 0.5);
+            --timeline-dot: #d8bfd8; /* Thistle */
+            --progress-bg: rgba(255, 255, 255, 0.3);
+            --bg-gradient: linear-gradient(120deg, #ffdde1 0%, #ee9ca7 100%);
+            --accent-bg-hover: rgba(231, 114, 134, 0.1);
+            --accent-focus-shadow: rgba(231, 114, 134, 0.2);
+        }
+
+        body.dark-mode {
+            --text-primary: #f0e6f0; /* Light Mauve */
+            --text-secondary: #b39ab3; /* Muted Light Mauve */
+            --accent: #ff8fab; /* Brighter Rosy Pink */
+            --completed: #2ee0d4; /* Brighter Sea Green */
+            --bg-card: rgba(0, 0, 0, 0.25);
+            --bg-card-open: rgba(0, 0, 0, 0.35);
+            --border-card: rgba(255, 255, 255, 0.2);
+            --timeline-line: rgba(255, 255, 255, 0.15);
+            --timeline-dot: #5c3a5c; /* Deeper Mauve */
+            --progress-bg: rgba(0, 0, 0, 0.2);
+            --bg-gradient: linear-gradient(120deg, #2c0a2c 0%, #4a2c4a 100%);
+            --accent-bg-hover: rgba(255, 143, 171, 0.1);
+            --accent-focus-shadow: rgba(255, 143, 171, 0.2);
+        }
+
+        body.ocean-mode {
+            --text-primary: #e0f7fa; /* Very Light Cyan */
+            --text-secondary: #b2ebf2; /* Light Cyan */
+            --accent: #ffc107; /* Amber (like sun on water) */
+            --completed: #4dd0e1; /* Cyan */
+            --bg-card: rgba(0, 0, 0, 0.3);
+            --bg-card-open: rgba(0, 0, 0, 0.4);
+            --border-card: rgba(255, 255, 255, 0.2);
+            --timeline-line: rgba(255, 255, 255, 0.15);
+            --timeline-dot: #0097a7; /* Dark Cyan */
+            --progress-bg: rgba(0, 0, 0, 0.2);
+            --bg-gradient: linear-gradient(120deg, #004d7a 0%, #0077c2 100%);
+            --accent-bg-hover: rgba(255, 193, 7, 0.1);
+            --accent-focus-shadow: rgba(255, 193, 7, 0.2);
+        }
+        #tsparticles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Place it behind all other content */
+        }
+        body {
+            font-family: 'Lora', serif;
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 40px 20px;
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            color: var(--text-secondary);
+            opacity: 0;
+            animation: gradientBG 30s ease infinite, fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        #welcome-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            padding: 30px 50px;
+            background-color: var(--bg-card-open);
+            color: var(--text-primary);
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-card);
+            opacity: 0;
+            animation: fadeInWelcome 0.5s ease-out 0.5s forwards, fadeOutWelcome 0.5s ease-in 1.5s forwards;
+        }
+
+        #welcome-message h2 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            border: none;
+            padding: 0;
+            color: var(--text-primary);
+        }
+
+        #welcome-message p {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        @keyframes fadeInWelcome {
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOutWelcome {
+            to { opacity: 0; transform: translate(-50%, -60%); visibility: hidden; }
+        }
+
+        h1,
+        h2 {
+            font-family: 'Dancing Script', cursive;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+            padding-bottom: 10px;
+        }
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        mark {
+            background-color: var(--accent);
+            color: white;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+        .search-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        #search-input {
+            width: 100%;
+            padding: 12px 45px 12px 45px;
+            border-radius: 8px;
+            border: 1px solid var(--border-card);
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            font-family: 'Lora', serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            backdrop-filter: blur(5px);
+        }
+        #search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-focus-shadow);
+        }
+        #search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+        #clear-search-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            display: none; /* Initially hidden */
+            transition: color 0.2s ease;
+        }
+        #clear-search-btn:hover {
+            color: var(--accent);
+        }
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .control-btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        #load-file-input {
+            display: none;
+        }
+        #theme-toggle-btn {
+            width: 40px; /* Give it a fixed width for the icon */
+            font-size: 1.2rem;
+        }
+        .control-btn {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-card);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'Lora', serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .control-btn:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        #progress-container {
+            width: 100%;
+            background-color: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        #progress-bar {
+            width: 0%;
+            height: 30px;
+            background-color: var(--accent);
+            text-align: center;
+            line-height: 30px;
+            color: var(--text-primary);
+            font-weight: bold;
+            border-radius: 8px;
+            transition: width 0.4s ease-in-out;
+            background-size: 200% 200%;
+            animation: shimmer 2s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        @keyframes completeGlow {
+            from {
+                box-shadow: 0 0 15px -5px rgba(32, 178, 170, 0.5);
+            }
+            to {
+                box-shadow: 0 0 25px 5px rgba(32, 178, 170, 0.7);
+            }
+        }
+
+        @keyframes slideInItem {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #toc details {
+            background-color: var(--bg-card);
+            backdrop-filter: blur(12px) saturate(150%);
+            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.4s ease;
+            overflow: hidden; /* Ensures border-radius is respected by children */
+            border: 1px solid var(--border-card);
+            position: relative;
+            width: calc(50% - 40px);
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        #toc details.in-view {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        #toc {
+            position: relative;
+        }
+
+        #toc::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 100%;
+            background-color: var(--timeline-line);
+            border-radius: 3px;
+        }
+
+        #toc details:nth-child(odd) {
+            margin-left: auto;
+        }
+
+        #toc details:nth-child(even) {
+            margin-right: auto;
+        }
+
+        #toc details[open] {
+            background-color: var(--bg-card-open);
+            border-color: var(--border-card);
+            transform: scale(1.02);
+        }
+
+        #toc details::after {
+            content: '';
+            position: absolute;
+            top: 28px;
+            height: 3px;
+            background-color: var(--timeline-line);
+            width: 33px;
+            z-index: -1; /* Behind the dot */
+        }
+
+        #toc details:nth-child(odd)::after { left: -33px; }
+        #toc details:nth-child(even)::after { right: -33px; }
+
+        #toc details.is-complete {
+            border-color: var(--completed);
+            animation: completeGlow 2s ease-in-out infinite alternate;
+        }
+ 
+        #toc details.hidden-by-search {
+            display: none;
+        }
+
+        #toc summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.6em;
+            font-weight: 700;
+            padding: 15px 20px;
+            cursor: pointer;
+            outline: none;
+            list-style: none; /* Hide the default marker */
+            color: var(--text-secondary);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .summary-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .completion-icon {
+            color: var(--completed);
+            width: 1.4em;
+            height: 1.4em;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        #toc summary::before {
+            content: '';
+            position: absolute;
+            top: 22px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: var(--timeline-dot);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        #toc details:nth-child(odd) > summary::before {
+            left: -7px;
+            transform: translateX(-100%);
+        }
+
+        #toc details:nth-child(even) > summary::before {
+            right: -7px;
+            transform: translateX(100%);
+        }
+
+        #toc details.is-complete > summary::before {
+            background-color: var(--completed);
+        }
+
+        #toc summary:hover {
+            background-color: var(--accent-bg-hover);
+            color: var(--text-primary);
+        }
+
+        #toc summary::after {
+            content: '';
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='3' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: rotate(-90deg);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #toc summary::-webkit-details-marker {
+            display: none;
+        }
+
+        #toc details[open] > summary::after {
+            transform: rotate(0deg);
+        }
+
+        #toc details.is-complete .completion-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        #toc details.is-complete .summary-title {
+            color: var(--text-primary);
+        }
+
+        #toc ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #toc li {
+            padding: 12px 20px 12px 40px;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        #toc details[open] li {
+            animation: slideInItem 0.3s ease-out forwards;
+            animation-delay: var(--stagger-delay, 0s);
+        }
+        #toc input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 1.3em;
+            height: 1.3em;
+            accent-color: var(--accent);
+        }
+        #toc label {
+            cursor: pointer;
+            flex: 1;
+            transition: color 0.2s ease;
+        }
+        
+        #toc input[type="checkbox"]:checked + label {
+            text-decoration: line-through
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        #toc li:hover {
+            background-color: var(--accent-bg-hover);
+            transform: translateX(4px);
+        }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 800px) {
+            body {
+                padding: 20px 15px;
+            }
+            h1 {
+                font-size: 2.5rem;
+            }
+            .header-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            #toc::before {
+                left: 15px; /* Move timeline to the left */
+                transform: none;
+            }
+            #toc details,
+            #toc details:nth-child(odd),
+            #toc details:nth-child(even) {
+                width: 100%;
+                margin: 0 0 10px 0; /* Reset margins for single column */
+                padding-left: 40px; /* Add space for the timeline */
+                box-sizing: border-box;
+            }
+            #toc details[open] {
+                transform: none; /* Disable zoom effect on mobile */
+            }
+            #toc details > summary::before,
+            #toc details:nth-child(odd) > summary::before,
+            #toc details:nth-child(even) > summary::before {
+                left: 7px; /* Position dot over the new timeline */
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-message">
+        <h2>Welcome Back!</h2>
+        <p>Ready to continue your journey?</p>
+    </div>
+
+    <div id="tsparticles"></div>
+    <h1>HTML Course Progress Tracker</h1>
+
+    <div class="search-container">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+        <input type="search" id="search-input" placeholder="Filter chapters and topics...">
+        <button id="clear-search-btn" title="Clear search">&times;</button>
+    </div>
+
+    <div class="header-controls">
+        <h2>Your Progress:</h2>
+        <div class="control-btn-group">
+            <button id="theme-toggle-btn" class="control-btn" title="Toggle Theme"></button>
+            <button id="save-btn" class="control-btn" title="Save Progress to File">Save</button>
+            <label for="load-file-input" class="control-btn" title="Load Progress from File">Load</label>
+            <input type="file" id="load-file-input" accept=".json">
+            <button id="reset-btn" class="control-btn" title="Reset Progress">Reset</button>
+        </div>
+    </div>
+
+    <div id="progress-container">
+        <div id="progress-bar">0%</div>
+    </div>
+
+    <div id="toc">
+        <details id="chapter-1">
+            <summary>Chapter 1: Getting started with HTML</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-1-1"><label for="sec-1-1">Section 1.1: Hello World</label></li>
+            </ul>
+        </details>
+        <details id="chapter-2">
+            <summary>Chapter 2: Doctypes</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-2-1"><label for="sec-2-1">Section 2.1: Adding the Doctype</label></li>
+                <li><input type="checkbox" id="sec-2-2"><label for="sec-2-2">Section 2.2: HTML 5 Doctype</label></li>
+            </ul>
+        </details>
+        <details id="chapter-3">
+            <summary>Chapter 3: Headings</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-3-1"><label for="sec-3-1">Section 3.1: Using Headings</label></li>
+            </ul>
+        </details>
+        <details id="chapter-4">
+            <summary>Chapter 4: Paragraphs</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-4-1"><label for="sec-4-1">Section 4.1: HTML Paragraphs</label></li>
+            </ul>
+        </details>
+        <details id="chapter-5">
+            <summary>Chapter 5: Text Formatting</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-5-1"><label for="sec-5-1">Section 5.1: Highlighting</label></li>
+                <li><input type="checkbox" id="sec-5-2"><label for="sec-5-2">Section 5.2: Bold, Italic, and Underline</label></li>
+                <li><input type="checkbox" id="sec-5-3"><label for="sec-5-3">Section 5.3: Abbreviation</label></li>
+                <li><input type="checkbox" id="sec-5-4"><label for="sec-5-4">Section 5.4: Inserted, Deleted, or Stricken</label></li>
+                <li><input type="checkbox" id="sec-5-5"><label for="sec-5-5">Section 5.5: Superscript and Subscript</label></li>
+            </ul>
+        </details>
+        <details id="chapter-6">
+            <summary>Chapter 6: Anchors and Hyperlinks</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-6-1"><label for="sec-6-1">Section 6.1: Link to another site</label></li>
+                <li><input type="checkbox" id="sec-6-2"><label for="sec-6-2">Section 6.2: Link to an anchor</label></li>
+                <li><input type="checkbox" id="sec-6-3"><label for="sec-6-3">Section 6.3: Link to a page on the same site</label></li>
+                <li><input type="checkbox" id="sec-6-4"><label for="sec-6-4">Section 6.4: Link that dials a number</label></li>
+                <li><input type="checkbox" id="sec-6-5"><label for="sec-6-5">Section 6.5: Open link in new tab/window</label></li>
+                <li><input type="checkbox" id="sec-6-6"><label for="sec-6-6">Section 6.6: Link that runs JavaScript</label></li>
+                <li><input type="checkbox" id="sec-6-7"><label for="sec-6-7">Section 6.7: Link that runs email client</label></li>
+            </ul>
+        </details>
+        <details id="chapter-7">
+            <summary>Chapter 7: Lists</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-7-1"><label for="sec-7-1">Section 7.1: Ordered List</label></li>
+                <li><input type="checkbox" id="sec-7-2"><label for="sec-7-2">Section 7.2: Unordered List</label></li>
+                <li><input type="checkbox" id="sec-7-3"><label for="sec-7-3">Section 7.3: Nested lists</label></li>
+                <li><input type="checkbox" id="sec-7-4"><label for="sec-7-4">Section 7.4: Description List</label></li>
+            </ul>
+        </details>
+        <details id="chapter-8">
+            <summary>Chapter 8: Tables</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-8-1"><label for="sec-8-1">Section 8.1: Simple Table</label></li>
+                <li><input type="checkbox" id="sec-8-2"><label for="sec-8-2">Section 8.2: Spanning columns or rows</label></li>
+                <li><input type="checkbox" id="sec-8-3"><label for="sec-8-3">Section 8.3: Column Groups</label></li>
+                <li><input type="checkbox" id="sec-8-4"><label for="sec-8-4">Section 8.4: Table with thead, tbody, tfoot, and caption</label></li>
+                <li><input type="checkbox" id="sec-8-5"><label for="sec-8-5">Section 8.5: Heading scope</label></li>
+            </ul>
+        </details>
+        <details id="chapter-9">
+            <summary>Chapter 9: Comments</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-9-1"><label for="sec-9-1">Section 9.1: Creating comments</label></li>
+                <li><input type="checkbox" id="sec-9-2"><label for="sec-9-2">Section 9.2: Commenting out whitespace between inline elements</label></li>
+            </ul>
+        </details>
+        <details id="chapter-10">
+            <summary>Chapter 10: Classes and IDs</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-10-1"><label for="sec-10-1">Section 10.1: Giving an element a class</label></li>
+                <li><input type="checkbox" id="sec-10-2"><label for="sec-10-2">Section 10.2: Giving an element an ID</label></li>
+                <li><input type="checkbox" id="sec-10-3"><label for="sec-10-3">Section 10.3: Acceptable Values</label></li>
+                <li><input type="checkbox" id="sec-10-4"><label for="sec-10-4">Section 10.4: Problems related to duplicated IDs</label></li>
+            </ul>
+        </details>
+        <details id="chapter-11">
+            <summary>Chapter 11: Data Attributes</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-11-1"><label for="sec-11-1">Section 11.1: Older browsers support</label></li>
+                <li><input type="checkbox" id="sec-11-2"><label for="sec-11-2">Section 11.2: Data Attribute Use</label></li>
+            </ul>
+        </details>
+        <details id="chapter-12">
+            <summary>Chapter 12: Linking Resources</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-12-1"><label for="sec-12-1">Section 12.1: JavaScript</label></li>
+                <li><input type="checkbox" id="sec-12-2"><label for="sec-12-2">Section 12.2: External CSS Stylesheet</label></li>
+                <li><input type="checkbox" id="sec-12-3"><label for="sec-12-3">Section 12.3: Favicon</label></li>
+                <li><input type="checkbox" id="sec-12-4"><label for="sec-12-4">Section 12.4: Alternative CSS</label></li>
+                <li><input type="checkbox" id="sec-12-5"><label for="sec-12-5">Section 12.5: Resource Hint: dns-prefetch, prefetch, prerender</label></li>
+                <li><input type="checkbox" id="sec-12-6"><label for="sec-12-6">Section 12.6: Link 'media' attribute</label></li>
+                <li><input type="checkbox" id="sec-12-7"><label for="sec-12-7">Section 12.7: Prev and Next</label></li>
+                <li><input type="checkbox" id="sec-12-8"><label for="sec-12-8">Section 12.8: Web Feed</label></li>
+            </ul>
+        </details>
+        <details id="chapter-13">
+            <summary>Chapter 13: Include JavaScript Code in HTML</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-13-1"><label for="sec-13-1">Section 13.1: Handling disabled Javascript</label></li>
+                <li><input type="checkbox" id="sec-13-2"><label for="sec-13-2">Section 13.2: Linking to an external JavaScript file</label></li>
+                <li><input type="checkbox" id="sec-13-3"><label for="sec-13-3">Section 13.3: Directly including JavaScript code</label></li>
+                <li><input type="checkbox" id="sec-13-4"><label for="sec-13-4">Section 13.4: Including a JavaScript file executing asynchronously</label></li>
+            </ul>
+        </details>
+        <details id="chapter-14">
+            <summary>Chapter 14: Using HTML with CSS</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-14-1"><label for="sec-14-1">Section 14.1: External Stylesheet Use</label></li>
+                <li><input type="checkbox" id="sec-14-2"><label for="sec-14-2">Section 14.2: Internal Stylesheet</label></li>
+                <li><input type="checkbox" id="sec-14-3"><label for="sec-14-3">Section 14.3: Inline Style</label></li>
+                <li><input type="checkbox" id="sec-14-4"><label for="sec-14-4">Section 14.4: Multiple Stylesheets</label></li>
+            </ul>
+        </details>
+        <details id="chapter-15">
+            <summary>Chapter 15: Images</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-15-1"><label for="sec-15-1">Section 15.1: Creating an image</label></li>
+                <li><input type="checkbox" id="sec-15-2"><label for="sec-15-2">Section 15.2: Choosing alt text</label></li>
+                <li><input type="checkbox" id="sec-15-3"><label for="sec-15-3">Section 15.3: Responsive image using the srcset attribute</label></li>
+                <li><input type="checkbox" id="sec-15-4"><label for="sec-15-4">Section 15.4: Responsive image using picture element</label></li>
+            </ul>
+        </details>
+        <details id="chapter-16">
+            <summary>Chapter 16: Image Maps</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-16-1"><label for="sec-16-1">Section 16.1: Introduction to Image Maps</label></li>
+            </ul>
+        </details>
+        <details id="chapter-17">
+            <summary>Chapter 17: Input Control Elements</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-17-1"><label for="sec-17-1">Section 17.1: Text</label></li>
+                <li><input type="checkbox" id="sec-17-2"><label for="sec-17-2">Section 17.2: Checkbox and Radio Buttons</label></li>
+                <li><input type="checkbox" id="sec-17-3"><label for="sec-17-3">Section 17.3: Input Validation</label></li>
+                <li><input type="checkbox" id="sec-17-4"><label for="sec-17-4">Section 17.4: Color</label></li>
+                <li><input type="checkbox" id="sec-17-5"><label for="sec-17-5">Section 17.5: Password</label></li>
+                <li><input type="checkbox" id="sec-17-6"><label for="sec-17-6">Section 17.6: File</label></li>
+                <li><input type="checkbox" id="sec-17-7"><label for="sec-17-7">Section 17.7: Button</label></li>
+                <li><input type="checkbox" id="sec-17-8"><label for="sec-17-8">Section 17.8: Submit</label></li>
+                <li><input type="checkbox" id="sec-17-9"><label for="sec-17-9">Section 17.9: Reset</label></li>
+                <li><input type="checkbox" id="sec-17-10"><label for="sec-17-10">Section 17.10: Hidden</label></li>
+                <li><input type="checkbox" id="sec-17-11"><label for="sec-17-11">Section 17.11: Tel</label></li>
+                <li><input type="checkbox" id="sec-17-12"><label for="sec-17-12">Section 17.12: Email</label></li>
+                <li><input type="checkbox" id="sec-17-13"><label for="sec-17-13">Section 17.13: Number</label></li>
+                <li><input type="checkbox" id="sec-17-14"><label for="sec-17-14">Section 17.14: Range</label></li>
+                <li><input type="checkbox" id="sec-17-15"><label for="sec-17-15">Section 17.15: Search</label></li>
+                <li><input type="checkbox" id="sec-17-16"><label for="sec-17-16">Section 17.16: Image</label></li>
+                <li><input type="checkbox" id="sec-17-17"><label for="sec-17-17">Section 17.17: Week</label></li>
+                <li><input type="checkbox" id="sec-17-18"><label for="sec-17-18">Section 17.18: Url</label></li>
+                <li><input type="checkbox" id="sec-17-19"><label for="sec-17-19">Section 17.19: DateTime-Local</label></li>
+                <li><input type="checkbox" id="sec-17-20"><label for="sec-17-20">Section 17.20: Month</label></li>
+                <li><input type="checkbox" id="sec-17-21"><label for="sec-17-21">Section 17.21: Time</label></li>
+                <li><input type="checkbox" id="sec-17-22"><label for="sec-17-22">Section 17.22: DateTime (Global)</label></li>
+                <li><input type="checkbox" id="sec-17-23"><label for="sec-17-23">Section 17.23: Date</label></li>
+            </ul>
+        </details>
+        <details id="chapter-18">
+            <summary>Chapter 18: Forms</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-18-1"><label for="sec-18-1">Section 18.1: Submitting</label></li>
+                <li><input type="checkbox" id="sec-18-2"><label for="sec-18-2">Section 18.2: Target attribute in form tag</label></li>
+                <li><input type="checkbox" id="sec-18-3"><label for="sec-18-3">Section 18.3: Uploading Files</label></li>
+                <li><input type="checkbox" id="sec-18-4"><label for="sec-18-4">Section 18.4: Grouping a few input fields</label></li>
+            </ul>
+        </details>
+        <details id="chapter-19">
+            <summary>Chapter 19: Div Element</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-19-1"><label for="sec-19-1">Section 19.1: Basic usage</label></li>
+                <li><input type="checkbox" id="sec-19-2"><label for="sec-19-2">Section 19.2: Nesting</label></li>
+            </ul>
+        </details>
+        <details id="chapter-20">
+            <summary>Chapter 20: Sectioning Elements</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-20-1"><label for="sec-20-1">Section 20.1: Nav Element</label></li>
+                <li><input type="checkbox" id="sec-20-2"><label for="sec-20-2">Section 20.2: Article Element</label></li>
+                <li><input type="checkbox" id="sec-20-3"><label for="sec-20-3">Section 20.3: Main Element</label></li>
+                <li><input type="checkbox" id="sec-20-4"><label for="sec-20-4">Section 20.4: Header Element</label></li>
+                <li><input type="checkbox" id="sec-20-5"><label for="sec-20-5">Section 20.5: Footer Element</label></li>
+                <li><input type="checkbox" id="sec-20-6"><label for="sec-20-6">Section 20.6: Section Element</label></li>
+            </ul>
+        </details>
+        <details id="chapter-21">
+            <summary>Chapter 21: Navigation Bars</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-21-1"><label for="sec-21-1">Section 21.1: Basic Navigation Bar</label></li>
+                <li><input type="checkbox" id="sec-21-2"><label for="sec-21-2">Section 21.2: HTML5 Navigation Bar</label></li>
+            </ul>
+        </details>
+        <details id="chapter-22">
+            <summary>Chapter 22: Label Element</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-22-1"><label for="sec-22-1">Section 22.1: About Label</label></li>
+                <li><input type="checkbox" id="sec-22-2"><label for="sec-22-2">Section 22.2: Basic Use</label></li>
+            </ul>
+        </details>
+        <details id="chapter-23">
+            <summary>Chapter 23: Output Element</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-23-1"><label for="sec-23-1">Section 23.1: Output Element Using For and Form Attributes</label></li>
+                <li><input type="checkbox" id="sec-23-2"><label for="sec-23-2">Section 23.2: Output Element with Attributes</label></li>
+            </ul>
+        </details>
+        <details id="chapter-24">
+            <summary>Chapter 24: Void Elements</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-24-1"><label for="sec-24-1">Section 24.1: Void elements</label></li>
+            </ul>
+        </details>
+        <details id="chapter-25">
+            <summary>Chapter 25: Media Elements</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-25-1"><label for="sec-25-1">Section 25.1: Audio</label></li>
+                <li><input type="checkbox" id="sec-25-2"><label for="sec-25-2">Section 25.2: Video</label></li>
+                <li><input type="checkbox" id="sec-25-3"><label for="sec-25-3">Section 25.3: Using `&lt;video&gt;` and `&lt;audio&gt;` element to display audio/video content</label></li>
+                <li><input type="checkbox" id="sec-25-4"><label for="sec-25-4">Section 25.4: Video header or background</label></li>
+            </ul>
+        </details>
+        <details id="chapter-26">
+            <summary>Chapter 26: Progress Element</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-26-1"><label for="sec-26-1">Section 26.1: Progress</label></li>
+                <li><input type="checkbox" id="sec-26-2"><label for="sec-26-2">Section 26.2: Changing the color of a progress bar</label></li>
+            </ul>
+        </details>
+        <details id="chapter-27">
+            <summary>Chapter 27: Selection Menu Controls</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-27-1"><label for="sec-27-1">Section 27.1: Select Menu</label></li>
+                <li><input type="checkbox" id="sec-27-2"><label for="sec-27-2">Section 27.2: Options</label></li>
+                <li><input type="checkbox" id="sec-27-3"><label for="sec-27-3">Section 27.3: Option Groups</label></li>
+                <li><input type="checkbox" id="sec-27-4"><label for="sec-27-4">Section 27.4: Datalist</label></li>
+            </ul>
+        </details>
+        <details id="chapter-28">
+            <summary>Chapter 28: Embed</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-28-1"><label for="sec-28-1">Section 28.1: Basic usage</label></li>
+                <li><input type="checkbox" id="sec-28-2"><label for="sec-28-2">Section 28.2: Defining the MIME type</label></li>
+            </ul>
+        </details>
+        <details id="chapter-29">
+            <summary>Chapter 29: IFrames</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-29-1"><label for="sec-29-1">Section 29.1: Basics of an Inline Frame</label></li>
+                <li><input type="checkbox" id="sec-29-2"><label for="sec-29-2">Section 29.2: Sandboxing</label></li>
+                <li><input type="checkbox" id="sec-29-3"><label for="sec-29-3">Section 29.3: Setting the Frame Size</label></li>
+                <li><input type="checkbox" id="sec-29-4"><label for="sec-29-4">Section 29.4: Using the "srcdoc" Attribute</label></li>
+                <li><input type="checkbox" id="sec-29-5"><label for="sec-29-5">Section 29.5: Using Anchors with IFrames</label></li>
+            </ul>
+        </details>
+        <details id="chapter-30">
+            <summary>Chapter 30: Content Languages</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-30-1"><label for="sec-30-1">Section 30.1: Base Document Language</label></li>
+                <li><input type="checkbox" id="sec-30-2"><label for="sec-30-2">Section 30.2: Element Language</label></li>
+                <li><input type="checkbox" id="sec-30-3"><label for="sec-30-3">Section 30.3: Elements with Multiple Languages</label></li>
+                <li><input type="checkbox" id="sec-30-4"><label for="sec-30-4">Section 30.4: Regional URLs</label></li>
+                <li><input type="checkbox" id="sec-30-5"><label for="sec-30-5">Section 30.5: Handling Attributes with Different Languages</label></li>
+            </ul>
+        </details>
+        <details id="chapter-31">
+            <summary>Chapter 31: SVG</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-31-1"><label for="sec-31-1">Section 31.1: Inline SVG</label></li>
+                <li><input type="checkbox" id="sec-31-2"><label for="sec-31-2">Section 31.2: Embedding external SVG files in HTML</label></li>
+                <li><input type="checkbox" id="sec-31-3"><label for="sec-31-3">Section 31.3: Embedding SVG using CSS</label></li>
+            </ul>
+        </details>
+        <details id="chapter-32">
+            <summary>Chapter 32: Canvas</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-32-1"><label for="sec-32-1">Section 32.1: Basic Example</label></li>
+                <li><input type="checkbox" id="sec-32-2"><label for="sec-32-2">Section 32.2: Drawing two rectangles on a &lt;canvas&gt;</label></li>
+            </ul>
+        </details>
+        <details id="chapter-33">
+            <summary>Chapter 33: Meta Information</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-33-1"><label for="sec-33-1">Section 33.1: Page Information</label></li>
+                <li><input type="checkbox" id="sec-33-2"><label for="sec-33-2">Section 33.2: Character Encoding</label></li>
+                <li><input type="checkbox" id="sec-33-3"><label for="sec-33-3">Section 33.3: Robots</label></li>
+                <li><input type="checkbox" id="sec-33-4"><label for="sec-33-4">Section 33.4: Social Media</label></li>
+                <li><input type="checkbox" id="sec-33-5"><label for="sec-33-5">Section 33.5: Mobile Layout Control</label></li>
+                <li><input type="checkbox" id="sec-33-6"><label for="sec-33-6">Section 33.6: Automatic Refresh</label></li>
+                <li><input type="checkbox" id="sec-33-7"><label for="sec-33-7">Section 33.7: Phone Number Recognition</label></li>
+                <li><input type="checkbox" id="sec-33-8"><label for="sec-33-8">Section 33.8: Automatic redirect</label></li>
+                <li><input type="checkbox" id="sec-33-9"><label for="sec-33-9">Section 33.9: Web App</label></li>
+            </ul>
+        </details>
+        <details id="chapter-34">
+            <summary>Chapter 34: Marking up computer code</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-34-1"><label for="sec-34-1">Section 34.1: Block with &lt;pre&gt; and &lt;code&gt;</label></li>
+                <li><input type="checkbox" id="sec-34-2"><label for="sec-34-2">Section 34.2: Inline with &lt;code&gt;</label></li>
+            </ul>
+        </details>
+        <details id="chapter-35">
+            <summary>Chapter 35: Marking-up Quotes</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-35-1"><label for="sec-35-1">Section 35.1: Inline with &lt;q&gt;</label></li>
+                <li><input type="checkbox" id="sec-35-2"><label for="sec-35-2">Section 35.2: Block with &lt;blockquote&gt;</label></li>
+            </ul>
+        </details>
+        <details id="chapter-36">
+            <summary>Chapter 36: Tabindex</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-36-1"><label for="sec-36-1">Section 36.1: Add an element to the tabbing order</label></li>
+                <li><input type="checkbox" id="sec-36-2"><label for="sec-36-2">Section 36.2: Remove an element from the tabbing order</label></li>
+                <li><input type="checkbox" id="sec-36-3"><label for="sec-36-3">Section 36.3: Define a custom tabbing order (not recommended)</label></li>
+            </ul>
+        </details>
+        <details id="chapter-37">
+            <summary>Chapter 37: Global Attributes</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-37-1"><label for="sec-37-1">Section 37.1: Contenteditable Attribute</label></li>
+            </ul>
+        </details>
+        <details id="chapter-38">
+            <summary>Chapter 38: HTML 5 Cache</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-38-1"><label for="sec-38-1">Section 38.1: Basic Example of HTML5 cache</label></li>
+            </ul>
+        </details>
+        <details id="chapter-39">
+            <summary>Chapter 39: HTML Event Attributes</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-39-1"><label for="sec-39-1">Section 39.1: HTML Form Events</label></li>
+                <li><input type="checkbox" id="sec-39-2"><label for="sec-39-2">Section 39.2: Keyboard Events</label></li>
+            </ul>
+        </details>
+        <details id="chapter-40">
+            <summary>Chapter 40: Character Entities</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-40-1"><label for="sec-40-1">Section 40.1: Character Entities in HTML</label></li>
+                <li><input type="checkbox" id="sec-40-2"><label for="sec-40-2">Section 40.2: Common Special Characters</label></li>
+            </ul>
+        </details>
+        <details id="chapter-41">
+            <summary>Chapter 41: ARIA</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-41-1"><label for="sec-41-1">Section 41.1: role="presentation"</label></li>
+                <li><input type="checkbox" id="sec-41-2"><label for="sec-41-2">Section 41.2: role="alert"</label></li>
+                <li><input type="checkbox" id="sec-41-3"><label for="sec-41-3">Section 41.3: role="alertdialog"</label></li>
+                <li><input type="checkbox" id="sec-41-4"><label for="sec-41-4">Section 41.4: role="application"</label></li>
+                <li><input type="checkbox" id="sec-41-5"><label for="sec-41-5">Section 41.5: role="article"</label></li>
+                <li><input type="checkbox" id="sec-41-6"><label for="sec-41-6">Section 41.6: role="banner"</label></li>
+                <li><input type="checkbox" id="sec-41-7"><label for="sec-41-7">Section 41.7: role="button"</label></li>
+                <li><input type="checkbox" id="sec-41-8"><label for="sec-41-8">Section 41.8: role="cell"</label></li>
+                <li><input type="checkbox" id="sec-41-9"><label for="sec-41-9">Section 41.9: role="checkbox"</label></li>
+                <li><input type="checkbox" id="sec-41-10"><label for="sec-41-10">Section 41.10: role="columnheader"</label></li>
+                <li><input type="checkbox" id="sec-41-11"><label for="sec-41-11">Section 41.11: role="combobox"</label></li>
+                <li><input type="checkbox" id="sec-41-12"><label for="sec-41-12">Section 41.12: role="complementary"</label></li>
+                <li><input type="checkbox" id="sec-41-13"><label for="sec-41-13">Section 41.13: role="contentinfo"</label></li>
+                <li><input type="checkbox" id="sec-41-14"><label for="sec-41-14">Section 41.14: role="definition"</label></li>
+                <li><input type="checkbox" id="sec-41-15"><label for="sec-41-15">Section 41.15: role="dialog"</label></li>
+                <li><input type="checkbox" id="sec-41-16"><label for="sec-41-16">Section 41.16: role="directory"</label></li>
+                <li><input type="checkbox" id="sec-41-17"><label for="sec-41-17">Section 41.17: role="document"</label></li>
+                <li><input type="checkbox" id="sec-41-18"><label for="sec-41-18">Section 41.18: role="form"</label></li>
+                <li><input type="checkbox" id="sec-41-19"><label for="sec-41-19">Section 41.19: role="grid"</label></li>
+                <li><input type="checkbox" id="sec-41-20"><label for="sec-41-20">Section 41.20: role="gridcell"</label></li>
+                <li><input type="checkbox" id="sec-41-21"><label for="sec-41-21">Section 41.21: role="group"</label></li>
+                <li><input type="checkbox" id="sec-41-22"><label for="sec-41-22">Section 41.22: role="heading"</label></li>
+                <li><input type="checkbox" id="sec-41-23"><label for="sec-41-23">Section 41.23: role="img"</label></li>
+                <li><input type="checkbox" id="sec-41-24"><label for="sec-41-24">Section 41.24: role="link"</label></li>
+                <li><input type="checkbox" id="sec-41-25"><label for="sec-41-25">Section 41.25: role="list"</label></li>
+                <li><input type="checkbox" id="sec-41-26"><label for="sec-41-26">Section 41.26: role="listbox"</label></li>
+                <li><input type="checkbox" id="sec-41-27"><label for="sec-41-27">Section 41.27: role="listitem"</label></li>
+                <li><input type="checkbox" id="sec-41-28"><label for="sec-41-28">Section 41.28: role="log"</label></li>
+                <li><input type="checkbox" id="sec-41-29"><label for="sec-41-29">Section 41.29: role="main"</label></li>
+                <li><input type="checkbox" id="sec-41-30"><label for="sec-41-30">Section 41.30: role="marquee"</label></li>
+                <li><input type="checkbox" id="sec-41-31"><label for="sec-41-31">Section 41.31: role="math"</label></li>
+                <li><input type="checkbox" id="sec-41-32"><label for="sec-41-32">Section 41.32: role="menu"</label></li>
+                <li><input type="checkbox" id="sec-41-33"><label for="sec-41-33">Section 41.33: role="menubar"</label></li>
+                <li><input type="checkbox" id="sec-41-34"><label for="sec-41-34">Section 41.34: role="menuitem"</label></li>
+                <li><input type="checkbox" id="sec-41-35"><label for="sec-41-35">Section 41.35: role="menuitemcheckbox"</label></li>
+                <li><input type="checkbox" id="sec-41-36"><label for="sec-41-36">Section 41.36: role="menuitemradio"</label></li>
+                <li><input type="checkbox" id="sec-41-37"><label for="sec-41-37">Section 41.37: role="navigation"</label></li>
+                <li><input type="checkbox" id="sec-41-38"><label for="sec-41-38">Section 41.38: role="note"</label></li>
+                <li><input type="checkbox" id="sec-41-39"><label for="sec-41-39">Section 41.39: role="option"</label></li>
+                <li><input type="checkbox" id="sec-41-40"><label for="sec-41-40">Section 41.40: role="progressbar"</label></li>
+                <li><input type="checkbox" id="sec-41-41"><label for="sec-41-41">Section 41.41: role="radio"</label></li>
+                <li><input type="checkbox" id="sec-41-42"><label for="sec-41-42">Section 41.42: role="region"</label></li>
+                <li><input type="checkbox" id="sec-41-43"><label for="sec-41-43">Section 41.43: role="radiogroup"</label></li>
+                <li><input type="checkbox" id="sec-41-44"><label for="sec-41-44">Section 41.44: role="row"</label></li>
+                <li><input type="checkbox" id="sec-41-45"><label for="sec-41-45">Section 41.45: role="rowgroup"</label></li>
+                <li><input type="checkbox" id="sec-41-46"><label for="sec-41-46">Section 41.46: role="rowheader"</label></li>
+                <li><input type="checkbox" id="sec-41-47"><label for="sec-41-47">Section 41.47: role="scrollbar"</label></li>
+                <li><input type="checkbox" id="sec-41-48"><label for="sec-41-48">Section 41.48: role="search"</label></li>
+                <li><input type="checkbox" id="sec-41-49"><label for="sec-41-49">Section 41.49: role="searchbox"</label></li>
+                <li><input type="checkbox" id="sec-41-50"><label for="sec-41-50">Section 41.50: role="separator"</label></li>
+                <li><input type="checkbox" id="sec-41-51"><label for="sec-41-51">Section 41.51: role="slider"</label></li>
+                <li><input type="checkbox" id="sec-41-52"><label for="sec-41-52">Section 41.52: role="spinbutton"</label></li>
+                <li><input type="checkbox" id="sec-41-53"><label for="sec-41-53">Section 41.53: role="status"</label></li>
+                <li><input type="checkbox" id="sec-41-54"><label for="sec-41-54">Section 41.54: role="switch"</label></li>
+                <li><input type="checkbox" id="sec-41-55"><label for="sec-41-55">Section 41.55: role="tab"</label></li>
+                <li><input type="checkbox" id="sec-41-56"><label for="sec-41-56">Section 41.56: role="table"</label></li>
+                <li><input type="checkbox" id="sec-41-57"><label for="sec-41-57">Section 41.57: role="tablist"</label></li>
+                <li><input type="checkbox" id="sec-41-58"><label for="sec-41-58">Section 41.58: role="tabpanel"</label></li>
+                <li><input type="checkbox" id="sec-41-59"><label for="sec-41-59">Section 41.59: role="textbox"</label></li>
+                <li><input type="checkbox" id="sec-41-60"><label for="sec-41-60">Section 41.60: role="timer"</label></li>
+                <li><input type="checkbox" id="sec-41-61"><label for="sec-41-61">Section 41.61: role="toolbar"</label></li>
+                <li><input type="checkbox" id="sec-41-62"><label for="sec-41-62">Section 41.62: role="tooltip"</label></li>
+                <li><input type="checkbox" id="sec-41-63"><label for="sec-41-63">Section 41.63: role="tree"</label></li>
+                <li><input type="checkbox" id="sec-41-64"><label for="sec-41-64">Section 41.64: role="treegrid"</label></li>
+                <li><input type="checkbox" id="sec-41-65"><label for="sec-41-65">Section 41.65: role="treeitem"</label></li>
+            </ul>
+        </details>
+        <details id="chapter-42">
+            <summary>Chapter 42: Practical Tasks &amp; Mini-Projects</summary>
+            <ul>
+                <li><input type="checkbox" id="sec-42-1"><label for="sec-42-1">Task: Build a Personal Bio Page</label></li>
+                <li><input type="checkbox" id="sec-42-2"><label for="sec-42-2">Task: Create a Recipe Page using Lists and Images</label></li>
+                <li><input type="checkbox" id="sec-42-3"><label for="sec-42-3">Task: Design a Simple Blog Post Layout with Articles and Sections</label></li>
+                <li><input type="checkbox" id="sec-42-4"><label for="sec-42-4">Task: Build a Functional Contact Form</label></li>
+                <li><input type="checkbox" id="sec-42-5"><label for="sec-42-5">Task: Recreate a simple website's navigation bar</label></li>
+            </ul>
+        </details>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles.slim.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('#toc input[type="checkbox"]');
+            const progressBar = document.getElementById('progress-bar');
+            const totalCheckboxes = checkboxes.length;
+            const detailsElements = document.querySelectorAll('#toc details');
+            const STAGGER_DELAY_MS = 40;
+            const tocContainer = document.getElementById('toc');
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            const body = document.body;
+            const saveBtn = document.getElementById('save-btn');
+            const loadFileInput = document.getElementById('load-file-input');
+            const resetBtn = document.getElementById('reset-btn');
+            const searchInput = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clear-search-btn');
+            let isCourseCompleted = false;
+            const baseTitle = document.title;
+            let currentProgressPercentage = 0;
+
+            // --- Theme Management ---
+            const themes = [
+                { name: 'light', icon: '🌙', particleColors: ["#ffffff", "#ffdde1", "#ee9ca7"], confetti: ['#e77286', '#ffdde1', '#ee9ca7', '#ffffff', '#20b2aa'], progressGradient: 'linear-gradient(90deg, #e77286, #f09eac, #e77286)' },
+                { name: 'dark', icon: '🌊', particleColors: ["#f0e6f0", "#5c3a5c", "#ff8fab"], confetti: ['#ff8fab', '#4a2c4a', '#f0e6f0', '#2ee0d4'], progressGradient: 'linear-gradient(90deg, #ff8fab, #ffc5d0, #ff8fab)' },
+                { name: 'ocean', icon: '☀️', particleColors: ["#e0f7fa", "#b2ebf2", "#ffc107"], confetti: ['#ffc107', '#e0f7fa', '#4dd0e1', '#0097a7'], progressGradient: 'linear-gradient(90deg, #ffc107, #ffd54f, #ffc107)' }
+            ];
+
+            function getCurrentTheme() {
+                const themeName = body.classList.contains('dark-mode') ? 'dark' : (body.classList.contains('ocean-mode') ? 'ocean' : 'light');
+                return themes.find(t => t.name === themeName) || themes[0];
+            }
+
+            function loadParticles(themeConfig) {
+                tsParticles.load("tsparticles", {
+                    fpsLimit: 60,
+                    particles: {
+                        number: { value: 40, density: { enable: true, value_area: 800 } },
+                        color: { value: themeConfig.particleColors },
+                        shape: { type: "circle" },
+                        opacity: { value: 0.5, random: true, anim: { enable: true, speed: 0.5, opacity_min: 0.1, sync: false } },
+                        size: { value: 3, random: true },
+                        move: { enable: true, speed: 0.5, direction: "none", random: true, straight: false, out_mode: "out", bounce: false }
+                    },
+                    interactivity: { detect_on: "canvas", events: { resize: true } },
+                    detectRetina: true
+                });
+            }
+
+            function applyTheme(themeName) {
+                const themeConfig = themes.find(t => t.name === themeName) || themes[0];
+                body.className = ''; // Clear existing theme classes
+                if (themeName !== 'light') {
+                    body.classList.add(themeName + '-mode');
+                }
+                themeToggleBtn.textContent = themeConfig.icon;
+                localStorage.setItem('theme', themeName);
+                loadParticles(themeConfig);
+                progressBar.style.backgroundImage = themeConfig.progressGradient;
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                const currentThemeName = localStorage.getItem('theme') || 'light';
+                const currentThemeIndex = themes.findIndex(t => t.name === currentThemeName);
+                const nextThemeIndex = (currentThemeIndex + 1) % themes.length;
+                applyTheme(themes[nextThemeIndex].name);
+            });
+
+            function applyInitialTheme() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                const themeExists = themes.some(t => t.name === savedTheme);
+                applyTheme(themeExists ? savedTheme : 'light');
+            }
+
+            // --- Save/Load/Reset ---
+            function saveProgressToFile() {
+                const progress = {};
+                checkboxes.forEach(cb => {
+                    progress[cb.id] = cb.checked;
+                });
+
+                const blob = new Blob([JSON.stringify(progress, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'html_course_progress.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function loadProgressFromFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const progress = JSON.parse(e.target.result);
+                        checkboxes.forEach(cb => {
+                            const isChecked = progress[cb.id] === true;
+                            cb.checked = isChecked;
+                            localStorage.setItem(cb.id, isChecked); // Persist loaded state
+                        });
+                        updateProgress();
+                        detailsElements.forEach(details => checkChapterCompletion(details));
+                        alert('Progress loaded successfully!');
+                    } catch (error) {
+                        alert('Error: Could not load progress. The file may be invalid.');
+                        console.error("Error parsing progress file:", error);
+                    } finally {
+                        event.target.value = ''; // Allow loading the same file again
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // --- Reset Progress ---
+            function resetProgress() {
+                if (confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
+                    checkboxes.forEach(cb => {
+                        cb.checked = false;
+                        localStorage.removeItem(cb.id);
+                    });
+                    updateProgress();
+                    detailsElements.forEach(details => checkChapterCompletion(details));
+                    alert('Progress has been reset.');
+                }
+            }
+
+            saveBtn.addEventListener('click', saveProgressToFile);
+            loadFileInput.addEventListener('change', loadProgressFromFile);
+            resetBtn.addEventListener('click', resetProgress);
+
+            // --- Search Filter Logic ---
+            function filterChapters() {
+                const searchTerm = searchInput.value.trim();
+                // Create a case-insensitive regex from the search term, escaping special characters
+                const regex = searchTerm ? new RegExp(searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi') : null;
+
+                // Clear previous highlights before applying new ones
+                document.querySelectorAll('.summary-title, #toc label').forEach(el => {
+                    if (el.dataset.originalText) {
+                        el.innerHTML = el.dataset.originalText;
+                        delete el.dataset.originalText;
+                    }
+                });
+
+                detailsElements.forEach(details => {
+                    const titleElement = details.querySelector('.summary-title');
+                    const labels = Array.from(details.querySelectorAll('label'));
+
+                    // If search is cleared, just unhide everything and we're done with this element
+                    if (!regex) {
+                        details.classList.remove('hidden-by-search');
+                        return;
+                    }
+
+                    const titleText = titleElement.textContent;
+                    // Check all labels at once for a match
+                    const hasTopicMatch = labels.some(label => regex.test(label.textContent));
+                    const hasMatch = regex.test(titleText) || hasTopicMatch;
+
+                    if (hasMatch) {
+                        details.classList.remove('hidden-by-search');
+                        details.open = true;
+
+                        // Highlight title if it matches
+                        if (regex.test(titleText)) {
+                            if (!titleElement.dataset.originalText) {
+                                titleElement.dataset.originalText = titleText;
+                            }
+                            titleElement.innerHTML = titleText.replace(regex, '<mark>$&</mark>');
+                        }
+
+                        // Highlight matching labels
+                        labels.forEach(label => {
+                            const labelText = label.textContent;
+                            if (regex.test(labelText)) {
+                                if (!label.dataset.originalText) {
+                                    label.dataset.originalText = labelText;
+                                }
+                                label.innerHTML = labelText.replace(regex, '<mark>$&</mark>');
+                            }
+                        });
+
+                    } else {
+                        details.classList.add('hidden-by-search');
+                        }
+                });
+            }
+
+            searchInput.addEventListener('input', () => {
+                filterChapters();
+                clearSearchBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
+            });
+
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                filterChapters();
+                searchInput.focus();
+            });
+
+
+            function checkChapterCompletion(detailsElement) {
+                const checkboxes = detailsElement.querySelectorAll('input[type="checkbox"]');
+                if (checkboxes.length === 0) return;
+
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                const isCurrentlyComplete = detailsElement.classList.contains('is-complete');
+
+                if (allChecked && !isCurrentlyComplete) {
+                    detailsElement.classList.add('is-complete');
+                    const confettiColors = getCurrentTheme().confetti;
+                    const rect = detailsElement.getBoundingClientRect();
+                    confetti({
+                        particleCount: 150,
+                        spread: 90,
+                        origin: {
+                            x: (rect.left + rect.width / 2) / window.innerWidth,
+                            y: (rect.top + rect.height / 2) / window.innerHeight
+                        },
+                        colors: confettiColors
+                    });
+                } else if (!allChecked && isCurrentlyComplete) {
+                    detailsElement.classList.remove('is-complete');
+                }
+            }
+
+            function triggerGrandFinale() {
+                const duration = 5 * 1000;
+                const animationEnd = Date.now() + duration;
+                const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+                function randomInRange(min, max) {
+                    return Math.random() * (max - min) + min;
+                }
+
+                const interval = setInterval(function() {
+                    const timeLeft = animationEnd - Date.now();
+
+                    if (timeLeft <= 0) {
+                        return clearInterval(interval);
+                    }
+
+                    const particleCount = 50 * (timeLeft / duration);
+                    const colors = getCurrentTheme().confetti;
+                    // since particles fall down, start a bit higher than random
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }, colors }));
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }, colors }));
+                }, 250);
+            }
+
+
+            // --- Collapsible Section & Animation Logic ---
+            detailsElements.forEach(details => {
+                // Default all chapters to open on page load.
+                details.open = true;
+
+                // The 'toggle' event listener for localStorage has been removed
+                // as this state is no longer persisted this way.
+
+                // --- Smooth Animation Wrapper Setup ---
+                const summary = details.querySelector('summary');
+                const originalTitle = summary.textContent;
+                summary.textContent = ''; // Clear original text
+
+                const icon = document.createElement('span');
+                icon.className = 'completion-icon';
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+
+                const summaryTitle = document.createElement('span');
+                summaryTitle.className = 'summary-title';
+                summaryTitle.textContent = originalTitle;
+
+                const summaryContent = document.createElement('span');
+                summaryContent.className = 'summary-content';
+                summaryContent.append(icon, summaryTitle);
+                summary.appendChild(summaryContent);
+
+                const ul = details.querySelector('ul');
+                if (!ul) return; // Safety check
+                
+                // Animate grid-template-rows for smooth height transition
+                const wrapper = document.createElement('div');
+                wrapper.style.overflow = 'hidden';
+                wrapper.style.display = 'grid';
+                wrapper.style.gridTemplateRows = details.open ? '1fr' : '0fr';
+                wrapper.style.transition = 'grid-template-rows 0.3s ease-out';
+                
+                details.insertBefore(wrapper, ul);
+                wrapper.appendChild(ul);
+
+                details.addEventListener('toggle', () => {
+                    wrapper.style.gridTemplateRows = details.open ? '1fr' : '0fr';
+                });
+
+                // Set staggered animation delay for list items
+                const listItems = ul.querySelectorAll('li');
+                listItems.forEach((li, index) => {
+                    li.style.setProperty('--stagger-delay', `${index * STAGGER_DELAY_MS}ms`);
+                });
+
+                // Set initial completion state
+                checkChapterCompletion(details);
+            });
+
+            function animateValue(obj, start, end, duration) {
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    const currentValue = Math.floor(progress * (end - start) + start);
+                    obj.textContent = currentValue + '%';
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        obj.textContent = end + '%'; // Ensure it ends on the exact number
+                    }
+                };
+                window.requestAnimationFrame(step);
+            }
+
+            function updateProgress() {
+                const checkedCount = document.querySelectorAll('#toc input[type="checkbox"]:checked').length;
+                const percentage = totalCheckboxes > 0 ? (checkedCount / totalCheckboxes) * 100 : 0;
+                
+                const roundedPercentage = Math.round(percentage);
+                progressBar.style.width = percentage + '%';
+                animateValue(progressBar, currentProgressPercentage, roundedPercentage, 400);
+                currentProgressPercentage = roundedPercentage;
+
+                // Update page title
+                if (roundedPercentage === 100) {
+                    document.title = '🎉 Course Completed! 🎉';
+                } else if (roundedPercentage > 0) {
+                    document.title = `(${roundedPercentage}%) ${baseTitle}`;
+                } else {
+                    document.title = baseTitle;
+                }
+
+                if (percentage === 100 && !isCourseCompleted) {
+                    isCourseCompleted = true;
+                    triggerGrandFinale();
+                } else if (percentage < 100) {
+                    isCourseCompleted = false;
+                }
+            }
+
+            // --- Checkbox and Progress Bar Logic ---
+            checkboxes.forEach(function(checkbox) {
+                // On page load, check localStorage to see if the checkbox was previously checked.
+                if (localStorage.getItem(checkbox.id) === 'true') {
+                    checkbox.checked = true;
+                }
+
+                // Add an event listener to each checkbox.
+                checkbox.addEventListener('change', function() {
+                    // When a checkbox is changed, save its state to localStorage.
+                    localStorage.setItem(this.id, this.checked);
+
+                    // Check for chapter completion
+                    const parentDetails = this.closest('details');
+                    if (parentDetails) {
+                        checkChapterCompletion(parentDetails);
+                    }
+
+                    // Then, update the progress bar.
+                    updateProgress();
+                });
+            });
+
+            updateProgress();
+            applyInitialTheme();
+        });
+
+        // --- Scroll Animation Observer ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('#toc details').forEach(detail => observer.observe(detail));
+
+    </script>
+
+</body>
+</html>
